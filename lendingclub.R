@@ -43,17 +43,25 @@ isfac<-sapply(loans,is.factor)
 factor_names<-names(isfac[isfac==TRUE])
 
 
-
+#create summary stats
 loans_summary<-lapply(factor_try,function (f) loans[,c(N=.N, as.list(summary(int_rate))),keyby=f])
 
 loans_summary_boxplots<-lapply(factor_try,function (f) {
 ggplot(loans,aes_string(x=f,y='int_rate'))+geom_boxplot()})
+z1p+geom_vline(xintercept=0.1389)+geom_errorbarh(limits)
 
 
 z1<- loans_summary[3][[1]][order(Mean),][N>100][1:30]
 
+#mean and sd of whole data
+limits<-aes(ymax=0.1389+.044/sqrt(z1$N),ymin=0.1389-.044/sqrt(z1$N))
 
-z1p<-ggplot(z1,aes(y=reorder(emp_title,Mean),x=Mean))+geom_point()
+z1p<-ggplot(z1,aes(x=reorder(emp_title,Median),ymin=`Min.`,ymax=`Max.`,lower=`1st Qu.`,middle=Median,upper=`3rd Qu.`)) + 
+  geom_boxplot(stat='identity')+coord_flip() + geom_hline(yintercept=0.1389) + geom_errorbar(limits) +
+  ggtitle('Interest rate for Lowest 30 employment titles (with more than 100 counts)')
+
+# the central line is mean of all data with +/- 1 std error. (so compare to eg median of each group)
+# box plots represent the actual distribution within each group ( ie error bars != IQR)
 
 
 #loans$int_rate<-as.numeric(substr(loans$int_rate,2,6))/100
