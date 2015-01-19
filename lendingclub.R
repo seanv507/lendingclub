@@ -3,10 +3,12 @@ require(xlsx)
 require(plyr)
 require(ggplot2)
 setwd("~/Documents/Sean/work/coding/lendingclub")
+# deal with "" quotes in 
 data.dict<-read.xlsx('LCDataDictionary.xlsx',sheetName='LoanStats',endRow=57,colIndex=1:4)
-
-loansa<-fread('LoanStats3a.csv',skip = 1,nrows=39786)
-loansb<-fread('LoanStats3b.csv',skip = 1,nrows=188123)
+loansa<-read.csv('LoanStats3a.csv',skip = 1,nrows=39786)
+# problem with quotes
+#loansa<-fread('LoanStats3a.csv',skip = 1,nrows=39786)
+loansb<-read.csv('LoanStats3b.csv',skip = 1,nrows=188123)
 loans<-rbindlist(list(loansa,loansb))
 colnames(loans)
 # check types
@@ -22,7 +24,7 @@ factor_types<-c("grade","sub_grade" ,"emp_title","emp_length","home_ownership","
                 "purpose","title","zip_code","addr_state","initial_list_status" ,"policy_code")
 
 
-
+# categorise to do diff analyses
 data.dict[numeric_types,'type']='numeric'
 data.dict[perc_types,'type']='numeric'
 data.dict[factor_types,'type']='factor'
@@ -33,20 +35,23 @@ for (col in numeric_types) set(loans, j=col, value=as.numeric(loans[[col]]))
 for (col in perc_types) set(loans, j=col, value=as.numeric(as.numeric(substr(loans[[col]],2,6))/100)) 
 loans$term<-as.numeric(substr(loans$term,2,3)) # " 36 Months"
 
-
-factor_try<-c("grade","sub_grade" ,"emp_title","emp_length","home_ownership","is_inc_v")
 for (col in factor_types) set(loans, j=col, value=as.factor(loans[[col]]))
-lev<- c("n/a","< 1 year",  "1 year", "2 years",   "3 years",   "4 years",   "5 years",   "6 years",   "7 years"  , "8 years", "9 years", "10+ years")
 
+
+
+lev<- c("n/a","< 1 year",  "1 year", "2 years",   "3 years",   "4 years",   "5 years",   "6 years",   "7 years"  , "8 years", "9 years", "10+ years")
 set(loans, j='emp_length', value=ordered(loans$emp_length,levels=lev))
 isfac<-sapply(loans,is.factor)
 factor_names<-names(isfac[isfac==TRUE])
 
-
 #create summary stats
-loans_summary<-lapply(factor_try,function (f) loans[,c(N=.N, as.list(summary(int_rate))),keyby=f])
+loans_summary<-loans[,c(N=.N, as.list(summary(int_rate)))]
 
-loans_summary_boxplots<-lapply(factor_try,function (f) {
+loans_summary_factors<-lapply(factor_types,function (f) loans[,c(N=.N, as.list(summary(int_rate))),keyby=f])
+loans_summary_factors_counts<-sapply(loans_summary_factors,nrow)
+
+loans_summary_factors_counts<-
+loans_summary_boxplots<-lapply(factor_types,function (f) {
 ggplot(loans,aes_string(x=f,y='int_rate'))+geom_boxplot()})
 z1p+geom_vline(xintercept=0.1389)+geom_errorbarh(limits)
 
